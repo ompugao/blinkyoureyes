@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  blinkyoureyes:
+    image: ompugao/blinkyoureyes:release
+    restart: always
+    build:
+      context: ./
+      target: release
+    environment:
+      - XAUTHORITY=/tmp/.docker.xauth
+      - DISPLAY=:0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /tmp/.docker.xauth:/tmp/.docker.xauth
+
