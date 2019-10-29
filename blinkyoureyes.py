@@ -4,7 +4,7 @@
 __author__ = "ompugao"
 
 import sys
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
@@ -26,6 +26,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
 
         self.initUI()
         self.timer.start()
+        self.dragstartpos = None
 
     def initUI(self):
         screenrect = QtWidgets.QDesktopWidget().screenGeometry().getRect()
@@ -34,6 +35,30 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.setGeometry(screenrect[2] - width, 0, width, height) #screenrect[3] - height
         self.setWindowTitle('Blink Your Eyes')
         self.show()
+
+    def mousePressEvent(self, event):
+        if event.buttons() & QtCore.Qt.LeftButton:
+            self.dragstartpos = event.pos()
+            self.xy = [event.x, event.y]
+            self.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
+
+    def mouseMoveEvent(self, event):
+        #self.move(event.x - self.xy[0], event.y - self.xy[1])
+        if (self.dragstartpos is not None\
+                and event.buttons() & QtCore.Qt.LeftButton):
+                #and (event.pos() - self.dragstartpos).manhattanLength() > QtWidgets.qApp.startDragDistance()):
+            event.pos() - self.dragstartpos
+            pos = QtCore.QPoint(event.globalPos())
+            self.window().move(pos - self.dragstartpos)
+            #self.dragstart = None
+            #drag = QtGui.QDrag(self)
+            #drag.setMimeData(QtCore.QMimeData())
+            #drag.exec_(QtCore.Qt.LinkAction)
+
+
+    def mouseReleaseEvent(self, event):
+        self.dragstartpos = None
+        self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     def timer_callback(self, ):
         self.timer_count = (self.timer_count + 1)%30 #3 seconds
