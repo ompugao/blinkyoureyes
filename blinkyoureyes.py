@@ -63,13 +63,13 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
     def timer_callback(self, ):
         self.timer_count = (self.timer_count + 1)%30 #3 seconds
         if self.timer_count == 0:
-            self.background_color = QtCore.Qt.white
+            self.background_color = QtCore.Qt.gray
             self.repaint()
         elif self.timer_count == 3:
             self.background_color = QtCore.Qt.black
             self.repaint()
         elif self.timer_count == 6:
-            self.background_color = QtCore.Qt.white
+            self.background_color = QtCore.Qt.gray
             self.repaint()
         elif self.timer_count == 9:
             self.background_color = QtCore.Qt.black
