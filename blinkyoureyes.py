@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = "ompugao"
@@ -30,8 +30,8 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
 
     def initUI(self):
         screenrect = QtWidgets.QDesktopWidget().screenGeometry().getRect()
-        width = screenrect[2] / 8 #170
-        height = screenrect[3] / 8 #80
+        width = int(screenrect[2] / 8) #170
+        height = int(screenrect[3] / 8) #80
         self.setGeometry(screenrect[2] - width, 0, width, height) #screenrect[3] - height
         self.setWindowTitle('Blink Your Eyes')
         self.show()
