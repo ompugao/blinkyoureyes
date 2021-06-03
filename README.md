@@ -17,6 +17,8 @@ pyinstaller --onefile blinkyoureyes.py
 mkdir -p ~/.config/systemd/user/
 cp -a dist/blinkyoureyes $HOME/install/bin/
 cp -a blinkyoureyes.service ~/.config/systemd/user/
+cp -a xsession.target ~/.config/systemd/user/
+cat .xsessionrc >> ~/.xsessionrc
 # start
 systemctl --user start blinkyoureyes.service
 # reference

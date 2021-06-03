@@ -1,5 +1,6 @@
 [Unit]
 Description=blinkyoureyes daemon service
+PartOf=graphical-session.target
 
 [Service]
 Type=simple
@@ -8,4 +9,4 @@ Restart=always
 RestartSec=30
 
 [Install]
-WantedBy=graphical.target
+WantedBy=xsession.target
