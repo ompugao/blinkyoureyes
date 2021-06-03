@@ -1,0 +1,11 @@
+[Unit]
+Description=blinkyoureyes daemon service
+
+[Service]
+Type=simple
+ExecStart=/home/sifi/install/bin/blinkyoureyes
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=graphical.target
