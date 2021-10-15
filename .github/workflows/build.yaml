@@ -2,6 +2,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   createrelease:
@@ -62,8 +64,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip3 install --upgrade pip
-        pip3 install pyinstaller pyqt5
+        python3 -m pip install --upgrade pip
+        pip install pyinstaller pyqt5
     - name: Build with pyinstaller for ${{matrix.TARGET}}
       run: ${{matrix.CMD_BUILD}}
     - name: Load Release URL File from release job
