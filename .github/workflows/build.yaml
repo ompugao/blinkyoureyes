@@ -46,7 +46,7 @@ jobs:
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: pyinstaller blinkyoureyes.py --onefile
+            CMD_BUILD: pyinstaller blinkyoureyes.py --onefile --noconsole
             OUT_FILE_NAME: blinkyoureyes.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
           - os: ubuntu-20.04
