@@ -135,6 +135,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
             self.close()
+            QtWidgets.qApp.quit()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
