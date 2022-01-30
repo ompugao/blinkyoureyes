@@ -18,7 +18,12 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
 
     def __init__(self, parent = None, widget = None):
         super(BlinkYourEyesWidget, self).__init__()
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint|QtCore.Qt.FramelessWindowHint)
+        # Avoid this window appearing from alt-tab window selection
+        # see the followings:
+        # https://stackoverflow.com/questions/3553428/how-can-i-prevent-gnome-from-showing-two-windows-when-doing-alt-tab-c-qt-app
+        # https://doc.qt.io/qt-5/qt.html#WindowType-enum
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint|QtCore.Qt.FramelessWindowHint
+                |QtCore.Qt.Tool)
         #self.setAttribute(Qt.Qt.WA_NoSystemBackground)
         #self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setWindowOpacity(0.8)
