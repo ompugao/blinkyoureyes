@@ -4,7 +4,9 @@
 __author__ = "ompugao"
 
 import sys
+import platform
 from PyQt5 import QtCore, QtWidgets, QtGui
+from ewmh import EWMH
 
 from enum import Enum
 
@@ -43,6 +45,15 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.dragmode = None
         self.dragstartpos = None
         self.dragstartgeom = None
+
+        if platform.system() == 'Linux':
+            ewmh = EWMH()
+            all_wins = ewmh.getClientList()
+            wins = filter(lambda w: 'blinkyoureyes' in w.get_wm_class()[1], all_wins)
+            for w in wins:
+                ewmh.setWmDesktop(w, 0xffffffff)
+            ewmh.display.flush()
+
 
     def initUI(self):
         screenrect = QtWidgets.QDesktopWidget().screenGeometry().getRect()
