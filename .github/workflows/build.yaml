@@ -39,19 +39,19 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-              pyinstaller -F -w --onefile -n blinkyoureyes blinkyoureyes.py &&
+              pyinstaller -F -w --onefile -n blinkyoureyes blinkyoureyes2.py &&
               cd dist/ &&
               zip -r9 blinkyoureyes blinkyoureyes.app/
             OUT_FILE_NAME: blinkyoureyes.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: pyinstaller blinkyoureyes.py --onefile --noconsole
+            CMD_BUILD: pyinstaller blinkyoureyes2.py --onefile --noconsole
             OUT_FILE_NAME: blinkyoureyes.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
           - os: ubuntu-20.04
             TARGET: ubuntu-20.04
-            CMD_BUILD: pyinstaller --onefile blinkyoureyes.py
+            CMD_BUILD: pyinstaller --onefile blinkyoureyes2.py
             OUT_FILE_NAME: blinkyoureyes
             ASSET_MIME: application/x-elf
     runs-on: ${{ matrix.os }}
