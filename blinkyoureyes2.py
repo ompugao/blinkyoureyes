@@ -102,7 +102,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
             return
         painter = QPainter(self)
         pen = painter.pen()
-        penwidth = 15
+        penwidth = 12
         pen.setWidth(penwidth)
         pen.setColor(self.pencolor)
         painter.setPen(pen)
