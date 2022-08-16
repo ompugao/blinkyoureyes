@@ -22,6 +22,9 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus)
         self.setGeometry(availablegeom)
+        # cprint(self.geometry())
+        self.geom = availablegeom
+        # print(availablegeom)
         # self.setGeometry(QtCore.QRect(0, 0, 1920, 1080))
         # self.showFullScreen()
         self.setAttribute(Qt.WA_NoSystemBackground, True)
@@ -40,17 +43,6 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.timer.timeout.connect(self.timer_callback)
         self.pencolor = QtCore.Qt.darkGreen
 
-        l = QLabel(self)
-        l.setWindowFlags(Qt.FramelessWindowHint);
-        # QPainter(l)
-        # p = QPixmap(self)
-        # l.setPixmap(p)
-        l.setScaledContents(True)
-        l.setAlignment(Qt.AlignTop | Qt.AlignBottom | Qt.AlignRight | Qt.AlignLeft)
-        # l.resize(300, 500); //just to test my idea
-        #l.setMask(p.scaled(l.width(),l.height(),Qt.IgnoreAspectRatio, Qt.SmoothTransformation).mask());
-        # l.show()
-
         self.show()
 
         if platform.system() == 'Linux':
@@ -67,14 +59,17 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         # https://github.com/fullermd/ctwm-mirror-old/blob/3e524368e11553c1a25389f33a667620c3b1bf43/ewmh.h#L37
         if platform.system() == 'Linux':
             all_wins = self.ewmh.getClientList()
-            winstates = [w.get_wm_state()['state'] for w in all_wins]
-            if 4 in winstates:
-                # there is a fullscreen window
-                print('there is a fullscreen window')
-                self.hide()
-            else:
-                self.show()
-
+            import Xlib.error
+            try:
+                winstates = [w.get_wm_state()['state'] for w in all_wins]
+                if 4 in winstates:
+                    # there is a fullscreen window
+                    print('there is a fullscreen window')
+                    self.hide()
+                else:
+                    self.show()
+            except Xlib.error.BadWindow:
+                pass
         self.timer_count = (self.timer_count + 1)%30 #1 seconds
         if self.timer_count == 0:
             # self.pencolor = QtCore.Qt.green
@@ -108,7 +103,6 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         painter.setPen(pen)
         # painter.setFont(QFont("Arial", 30))
         # painter.drawText(rect(), Qt.AlignCenter, "Qt")
-        # print(self.pos())
         rect = QtCore.QRect(0, 0, self.width(), self.height())
         painter.drawRect(rect)
         painter.end()
@@ -116,8 +110,9 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     dw = app.desktop()
-    ex = BlinkYourEyesWidget(dw.availableGeometry())
+    # ex = BlinkYourEyesWidget(dw.availableGeometry())
     # ex = BlinkYourEyesWidget(dw.geometry())
+    ex = BlinkYourEyesWidget(dw.availableGeometry(dw.screen(dw.primaryScreen())))
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
