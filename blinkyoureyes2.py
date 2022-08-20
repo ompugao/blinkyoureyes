@@ -72,8 +72,8 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
                 pass
         self.timer_count = (self.timer_count + 1)%30 #1 seconds
         if self.timer_count == 0:
-            # self.pencolor = QtCore.Qt.green
-            self.pencolor = QtCore.Qt.darkGreen
+            self.pencolor = QtCore.Qt.green
+            # self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = False
             self.repaint()
         elif self.timer_count == 3:
@@ -82,8 +82,8 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
             self.update()
             self.repaint()
         elif self.timer_count == 6:
-            # self.pencolor = QtCore.Qt.green
-            self.pencolor = QtCore.Qt.darkGreen
+            self.pencolor = QtCore.Qt.green
+            # self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = False
             self.repaint()
         elif self.timer_count == 9:
@@ -103,8 +103,12 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         painter.setPen(pen)
         # painter.setFont(QFont("Arial", 30))
         # painter.drawText(rect(), Qt.AlignCenter, "Qt")
-        rect = QtCore.QRect(0, 0, self.width(), self.height())
+        geom = self.geometry()
+        # rect = QtCore.QRect(0, 0, self.width(), self.height())
+        rect = QtCore.QRect(0, 0, geom.width() - geom.x(), geom.height() - geom.y())
         painter.drawRect(rect)
+        print(self.geometry())
+        print(rect)
         painter.end()
 
 def main():
