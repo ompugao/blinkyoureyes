@@ -45,7 +45,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.pencolor = QtCore.Qt.darkGreen
 
         # self.show()
-        self.showMaximized()
+        self.show()
 
         if platform.system() == 'Linux':
             self.ewmh = EWMH()
@@ -75,7 +75,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
                     print('there is a fullscreen window')
                     self.hide()
                 else:
-                    self.showMaximized()
+                    self.show()
             except Xlib.error.BadWindow:
                 pass
         self.timer_count = (self.timer_count + 1)%30 #1 seconds
