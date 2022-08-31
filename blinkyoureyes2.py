@@ -2,14 +2,14 @@
 import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel
-from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction
+from PyQt5.QtGui import QPainter, QPixmap, QIcon
 import platform
 from ewmh import EWMH
 
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
-    def __init__(self, availablegeom, parent = None, widget = None):
+    def __init__(self, availablegeom, name = '', parent = None, widget = None):
         super(BlinkYourEyesWidget, self).__init__()
         # Avoid this window appearing from alt-tab window selection
         # see the followings:
@@ -22,12 +22,13 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus)
         self.setGeometry(availablegeom)
-        # cprint(self.geometry())
         self.geom = availablegeom
+        self.name = name
         # print(availablegeom)
         # self.setGeometry(QtCore.QRect(0, 0, 1920, 1080))
         # self.showFullScreen()
         self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         # self.setWindowOpacity(1.0)
         # self.setStyleSheet("QWidget{background: #000000}")
@@ -43,15 +44,22 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.timer.timeout.connect(self.timer_callback)
         self.pencolor = QtCore.Qt.darkGreen
 
-        self.show()
+        # self.show()
+        self.showMaximized()
 
         if platform.system() == 'Linux':
             self.ewmh = EWMH()
-            all_wins = self.ewmh.getClientList()
-            wins = filter(lambda w: 'blinkyoureyes' in w.get_wm_class()[1], all_wins)
-            for w in wins:
-                self.ewmh.setWmDesktop(w, 0xffffffff)
-            self.ewmh.display.flush()
+            while True:
+                import Xlib.error
+                try:
+                    all_wins = self.ewmh.getClientList()
+                    wins = filter(lambda w: 'blinkyoureyes' in w.get_wm_class()[1], all_wins)
+                    for w in wins:
+                        self.ewmh.setWmDesktop(w, 0xffffffff)
+                    self.ewmh.display.flush()
+                    break
+                except Xlib.error.BadWindow as e:
+                    time.sleep(0.1)
 
         self.timer.start()
 
@@ -67,7 +75,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
                     print('there is a fullscreen window')
                     self.hide()
                 else:
-                    self.show()
+                    self.showMaximized()
             except Xlib.error.BadWindow:
                 pass
         self.timer_count = (self.timer_count + 1)%30 #1 seconds
@@ -105,18 +113,52 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         # painter.drawText(rect(), Qt.AlignCenter, "Qt")
         geom = self.geometry()
         # rect = QtCore.QRect(0, 0, self.width(), self.height())
-        rect = QtCore.QRect(0, 0, geom.width() - geom.x(), geom.height() - geom.y())
+        if geom.y() < 100:  # TODO: heuristic to handle the height of gnome3 system tray bar
+            rect = QtCore.QRect(0, 0, geom.width(), geom.height() - geom.y())
+        else:
+            rect = QtCore.QRect(0, 0, geom.width(), geom.height())
         painter.drawRect(rect)
-        print(self.geometry())
-        print(rect)
+        print(self.name, self.frameGeometry(), self.geometry(), rect)
         painter.end()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
     dw = app.desktop()
+
     # ex = BlinkYourEyesWidget(dw.availableGeometry())
     # ex = BlinkYourEyesWidget(dw.geometry())
-    ex = BlinkYourEyesWidget(dw.availableGeometry(dw.screen(dw.primaryScreen())))
+    # w = BlinkYourEyesWidget(dw.availableGeometry(dw.primaryScreen()))
+    widgets = {}
+
+    for i in range(dw.screenCount()):
+        w = BlinkYourEyesWidget(dw.availableGeometry(dw.screen(i)), 'ex%s'%dw.screen(i).screen().serialNumber())
+        widgets[dw.screen(i).screen()] = w
+
+    # def create(screen):
+    #     widgets[screen] = BlinkYourEyesWidget(screen.availableGeometry(), 'ex%s'%screen.serialNumber())
+    #     for w in widgets.values():
+    #         w.timer.stop()
+    #     for w in widgets.values():
+    #         w.timer.start()  # restart
+    # def delete(screen):
+    #     widgets.pop(screen, None)
+    # app.screenAdded.connect(create)
+    # app.screenRemoved.connect(delete)
+
+    # systray
+    icon = QIcon("icon.png")
+    # Adding item on the menu bar
+    tray = QSystemTrayIcon()
+    tray.setIcon(icon)
+    tray.setVisible(True)
+    # Creating the options
+    menu = QMenu()
+    quit = QAction("Quit")
+    quit.triggered.connect(app.quit)
+    menu.addAction(quit)
+    # Adding options to the System Tray
+    tray.setContextMenu(menu)
+
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
