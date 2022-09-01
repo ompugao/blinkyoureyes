@@ -1,11 +1,31 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QPainter, QPixmap, QIcon
 import platform
 from ewmh import EWMH
+
+
+def retrieve_asset(name, dir='assets'):
+    if getattr(sys, 'frozen', False):
+        # print('sys.frozen:', sys.frozen)
+        # print('sys.executable:', sys.executable)
+        # print('sys._MEIPASS:', sys._MEIPASS)
+
+        folder_of_executable = os.path.dirname(sys.executable)
+        if os.path.samefile(folder_of_executable, sys._MEIPASS):
+            base_path = os.path.dirname(folder_of_executable)
+        else:
+            base_path = folder_of_executable
+
+        assets_path = os.path.join(sys._MEIPASS, dir)
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        assets_path = os.path.join(base_path, dir)
+    return os.path.join(assets_path, name)
 
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
@@ -146,7 +166,7 @@ def main():
     # app.screenRemoved.connect(delete)
 
     # systray
-    icon = QIcon("icon.png")
+    icon = QIcon(retrieve_asset("icon.png"))
     # Adding item on the menu bar
     tray = QSystemTrayIcon()
     tray.setIcon(icon)
