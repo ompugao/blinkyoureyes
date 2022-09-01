@@ -6,6 +6,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QPainter, QPixmap, QIcon
 import platform
+import functools
+import weakref
 from ewmh import EWMH
 
 
@@ -29,7 +31,7 @@ def retrieve_asset(name, dir='assets'):
 
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
-    def __init__(self, availablegeom, name = '', parent = None, widget = None):
+    def __init__(self, availablegeom, timer_count_ref, name = '', parent = None, widget = None):
         super(BlinkYourEyesWidget, self).__init__()
         # Avoid this window appearing from alt-tab window selection
         # see the followings:
@@ -56,12 +58,8 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
 
         #self.setFocusPolicy(QtCore.Qt.NoFocus)
         #self.setStyleSheet("background-color:transparent;")
-
+        self.timer_count = timer_count_ref
         self.clearpaint = False
-        self.timer_count = 0
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(100)  # [milliseconds]
-        self.timer.timeout.connect(self.timer_callback)
         self.pencolor = QtCore.Qt.darkGreen
 
         # self.show()
@@ -81,7 +79,6 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
                 except Xlib.error.BadWindow as e:
                     time.sleep(0.1)
 
-        self.timer.start()
 
     def timer_callback(self, ):
         # https://github.com/fullermd/ctwm-mirror-old/blob/3e524368e11553c1a25389f33a667620c3b1bf43/ewmh.h#L37
@@ -98,23 +95,22 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
                     self.show()
             except Xlib.error.BadWindow:
                 pass
-        self.timer_count = (self.timer_count + 1)%30 #1 seconds
-        if self.timer_count == 0:
+        if self.timer_count.count == 0:
             self.pencolor = QtCore.Qt.green
             # self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = False
             self.repaint()
-        elif self.timer_count == 3:
+        elif self.timer_count.count == 3:
             #self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = True
             self.update()
             self.repaint()
-        elif self.timer_count == 6:
+        elif self.timer_count.count == 6:
             self.pencolor = QtCore.Qt.green
             # self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = False
             self.repaint()
-        elif self.timer_count == 9:
+        elif self.timer_count.count == 9:
             #self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = True
             self.update()
@@ -150,12 +146,30 @@ def main():
     # w = BlinkYourEyesWidget(dw.availableGeometry(dw.primaryScreen()))
     widgets = {}
 
+    timer = QtCore.QTimer()
+    class TimerCount(object):
+        def __init__(self, ):
+            self.count = 0
+        def _update(self,):
+            self.count = (self.count + 1)%30  # 1 seconds
+
+    timer_count = TimerCount()
+    timer.setInterval(100)  # [milliseconds]
+    # def _update_count():
+        # timer_count = (timer_count + 1)%30 #1 seconds
+    timer.timeout.connect(timer_count._update)
+
     for i in range(dw.screenCount()):
-        w = BlinkYourEyesWidget(dw.availableGeometry(dw.screen(i)), 'ex%s'%dw.screen(i).screen().serialNumber())
+        w = BlinkYourEyesWidget(dw.availableGeometry(dw.screen(i)),
+                                weakref.proxy(timer_count),
+                                'ex%s'%dw.screen(i).screen().serialNumber())
+        timer.timeout.connect(w.timer_callback)
         widgets[dw.screen(i).screen()] = w
 
     # def create(screen):
-    #     widgets[screen] = BlinkYourEyesWidget(screen.availableGeometry(), 'ex%s'%screen.serialNumber())
+    #     widgets[screen] = BlinkYourEyesWidget(screen.availableGeometry(),
+    #                           weakref.proxy(timer_count),
+    #                           'ex%s'%screen.serialNumber())
     #     for w in widgets.values():
     #         w.timer.stop()
     #     for w in widgets.values():
@@ -164,6 +178,8 @@ def main():
     #     widgets.pop(screen, None)
     # app.screenAdded.connect(create)
     # app.screenRemoved.connect(delete)
+
+    timer.start()
 
     # systray
     icon = QIcon(retrieve_asset("icon.png"))
