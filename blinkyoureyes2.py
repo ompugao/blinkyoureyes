@@ -2,13 +2,17 @@
 import sys
 import os
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction
-from PyQt5.QtGui import QPainter, QPixmap, QIcon
+from PyQt5.QtCore import Qt, QSettings
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction, QColorDialog, QWidgetAction, QDialog, QDialogButtonBox, QVBoxLayout, QHBoxLayout, QSlider
+from PyQt5.QtGui import QPainter, QPixmap, QIcon, QColor
+
+from pyqt_colorpicker_widget.PyQt5.colorpicker import ColorPicker
+
 import platform
 import functools
 import weakref
 from ewmh import EWMH
+import time
 
 
 def retrieve_asset(name, dir='assets'):
@@ -31,7 +35,8 @@ def retrieve_asset(name, dir='assets'):
 
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
-    def __init__(self, availablegeom, timer_count_ref, name = '', parent = None, widget = None):
+    def __init__(self, availablegeom, timer_count_ref, name = '', parent = None, widget = None,
+                 pencolor = QtCore.Qt.green, penwidth = 6):
         super(BlinkYourEyesWidget, self).__init__()
         # Avoid this window appearing from alt-tab window selection
         # see the followings:
@@ -60,7 +65,9 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         #self.setStyleSheet("background-color:transparent;")
         self.timer_count = timer_count_ref
         self.clearpaint = False
-        self.pencolor = QtCore.Qt.darkGreen
+        self.pencolor = pencolor
+        self.penwidth = penwidth
+        # self.pencolor = QtCore.Qt.darkGreen
 
         # self.show()
         self.show()
@@ -78,6 +85,9 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
                     break
                 except Xlib.error.BadWindow as e:
                     time.sleep(0.1)
+                except Exception as e:
+                    break
+
 
 
     def timer_callback(self, ):
@@ -96,49 +106,122 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
             except Xlib.error.BadWindow:
                 pass
         if self.timer_count.count == 0:
-            self.pencolor = QtCore.Qt.green
-            # self.pencolor = QtCore.Qt.darkGreen
+            self.clearpaint = False
+            self.repaint()
+        elif self.timer_count.count == 1:
+            self.clearpaint = True
+            self.update()
+            self.repaint()
+        elif self.timer_count.count == 2:
             self.clearpaint = False
             self.repaint()
         elif self.timer_count.count == 3:
-            #self.pencolor = QtCore.Qt.darkGreen
             self.clearpaint = True
             self.update()
             self.repaint()
-        elif self.timer_count.count == 6:
-            self.pencolor = QtCore.Qt.green
-            # self.pencolor = QtCore.Qt.darkGreen
-            self.clearpaint = False
-            self.repaint()
-        elif self.timer_count.count == 9:
-            #self.pencolor = QtCore.Qt.darkGreen
-            self.clearpaint = True
-            self.update()
-            self.repaint()
+
+    def set_pencolor(self, color):
+        self.pencolor = color
+
+    def set_penwidth(self, width):
+        self.penwidth = width
 
     def paintEvent(self, e):
         if self.clearpaint:
             return
         painter = QPainter(self)
         pen = painter.pen()
-        penwidth = 12
-        pen.setWidth(penwidth)
+        pen.setWidth(self.penwidth)
         pen.setColor(self.pencolor)
         painter.setPen(pen)
         # painter.setFont(QFont("Arial", 30))
         # painter.drawText(rect(), Qt.AlignCenter, "Qt")
         geom = self.geometry()
         # rect = QtCore.QRect(0, 0, self.width(), self.height())
-        if geom.y() < 100:  # TODO: heuristic to handle the height of gnome3 system tray bar
-            rect = QtCore.QRect(0, 0, geom.width(), geom.height() - geom.y())
-        else:
-            rect = QtCore.QRect(0, 0, geom.width(), geom.height())
+        # if geom.y() < 100:  # TODO: heuristic to handle the height of gnome3 system tray bar
+        #     rect = QtCore.QRect(0, 0, geom.width(), geom.height() - geom.y())
+        # else:
+        #    rect = QtCore.QRect(0, 0, geom.width(), geom.height())
+        rect = QtCore.QRect(0, 0, geom.width(), geom.height())
         painter.drawRect(rect)
         print(self.name, self.frameGeometry(), self.geometry(), rect)
         painter.end()
 
+def load_settings():
+    settings = QSettings('blinkyoureyes', 'configs')
+    pencolor = settings.value('pencolor', defaultValue=QColor(QtCore.Qt.green), type=QColor)
+    penwidth = settings.value('penwidth', defaultValue=6, type=int)
+    return dict(pencolor=pencolor, penwidth=penwidth)
+
+def save_settings(color, width):
+    settings = QSettings('blinkyoureyes', 'configs')
+    settings.setValue('pencolor', color)
+    settings.setValue('penwidth', width)
+    del settings
+
+class SettingsDialog(QDialog):
+    def __init__(self, widgets):
+        super().__init__()
+
+        self.setWindowTitle("BlinkYourEyes Settings")
+
+        QBtn = QDialogButtonBox.Save  | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.save)
+        self.buttonBox.rejected.connect(self.cancel)
+
+        self.layout = QVBoxLayout()
+
+        current_settings = load_settings()
+
+        hlayout = QHBoxLayout()
+
+        self.colorpicker = ColorPicker(self, rgb=(
+            current_settings['pencolor'].red(),
+            current_settings['pencolor'].green(),
+            current_settings['pencolor'].blue()))
+
+        self.slider = QSlider(QtCore.Qt.Horizontal)
+        self.slider.setTickInterval(1)
+        self.slider.setMinimum(1)
+        self.slider.setMaximum(32)
+        self.slider.setSingleStep(1)
+        self.slider.setSliderPosition(current_settings['penwidth'])
+        self.widthlabel = QLabel(str(current_settings['penwidth']))
+        self.slider.valueChanged.connect(lambda value: self.widthlabel.setText(str(value)))
+        for k, w in widgets.items():
+            self.slider.valueChanged.connect(w.set_penwidth)
+            self.colorpicker.colorChanged.connect(lambda:
+                                                  w.set_pencolor(QColor.fromRgb(*map(int, self.colorpicker.getRGB()))))
+        hlayout.addWidget(self.slider)
+        hlayout.addWidget(self.widthlabel)
+
+        self.layout.addWidget(QLabel("Select Width"))
+        self.layout.addLayout(hlayout)
+        self.layout.addWidget(QLabel("Select Color"))
+        self.layout.addWidget(self.colorpicker)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def save(self,):
+        color = QColor.fromRgb(*map(int, self.colorpicker.getRGB()))
+        width = self.slider.value()
+        save_settings(color, width)
+        self.close()
+
+    def cancel(self,):
+        self.close()
+
+def open_settings_dialog(s, widgets):
+    dlg = SettingsDialog(widgets)
+    dlg.exec_()
+
 def main():
+    configs = load_settings()
     app = QtWidgets.QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+
     dw = app.desktop()
 
     # ex = BlinkYourEyesWidget(dw.availableGeometry())
@@ -151,10 +234,10 @@ def main():
         def __init__(self, ):
             self.count = 0
         def _update(self,):
-            self.count = (self.count + 1)%30  # 1 seconds
+            self.count = (self.count + 1)%10  # 1 seconds
 
     timer_count = TimerCount()
-    timer.setInterval(100)  # [milliseconds]
+    timer.setInterval(300)  # [milliseconds]
     # def _update_count():
         # timer_count = (timer_count + 1)%30 #1 seconds
     timer.timeout.connect(timer_count._update)
@@ -162,7 +245,9 @@ def main():
     for i in range(dw.screenCount()):
         w = BlinkYourEyesWidget(dw.availableGeometry(dw.screen(i)),
                                 weakref.proxy(timer_count),
-                                'ex%s'%dw.screen(i).screen().serialNumber())
+                                'ex%s'%dw.screen(i).screen().serialNumber(),
+                                pencolor=configs['pencolor'],
+                                penwidth=configs['penwidth'])
         timer.timeout.connect(w.timer_callback)
         widgets[dw.screen(i).screen()] = w
 
@@ -182,13 +267,16 @@ def main():
     timer.start()
 
     # systray
-    icon = QIcon(retrieve_asset("icon.png"))
-    # Adding item on the menu bar
     tray = QSystemTrayIcon()
-    tray.setIcon(icon)
+    tray.setIcon(QIcon(retrieve_asset("icon.png")))
     tray.setVisible(True)
     # Creating the options
     menu = QMenu()
+    # settingsaction = QWidgetAction(None)
+    settingsaction = QAction('Settings')
+    # settingslabel = QLabel('Settings')
+    settingsaction.triggered.connect(lambda s: open_settings_dialog(s, widgets))
+    menu.addAction(settingsaction)
     quit = QAction("Quit")
     quit.triggered.connect(app.quit)
     menu.addAction(quit)
