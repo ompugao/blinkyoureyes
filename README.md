@@ -1,10 +1,10 @@
 # blinkyoureyes
 
 - a tool to help you to blink your eyes
-https://youtu.be/2hCUxoMv8vI
+https://youtu.be/JnzDWCNB-94
 
 
-[![behaviour](https://img.youtube.com/vi/2hCUxoMv8vI/maxresdefault.jpg)](https://youtu.be/2hCUxoMv8vI)
+[![](https://img.youtube.com/vi/JnzDWCNB-94/0.jpg)](https://www.youtube.com/watch?v=JnzDWCNB-94)
 
 - The icon is taken from [ICOOON MONO](https://icooon-mono.com/00089-%e9%9b%ab%e3%81%ae%e3%82%a2%e3%82%a4%e3%82%b3%e3%83%b3%e7%b4%a0%e6%9d%90/).
 
