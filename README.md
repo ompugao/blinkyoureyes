@@ -7,7 +7,7 @@ https://youtu.be/JnzDWCNB-94
 
 ## Usage
 
-- Download a binary file from https://github.com/ompugao/blinkyoureyes/releases/latest and install&run it.
+- Download a binary file from https://github.com/ompugao/blinkyoureyes/releases/latest , install and run it.
 	- for linux: `blinkyoureyes`
 	- for mac: `blinkyoureyes.zip`
 	- for windows: `blinkyoureyes.exe`
