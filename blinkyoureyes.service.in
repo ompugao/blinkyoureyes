@@ -4,7 +4,7 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=/home/sifi/install/bin/blinkyoureyes
+ExecStart={{EXEFILE}}
 Restart=always
 RestartSec=30
 

@@ -16,6 +16,7 @@ https://youtu.be/JnzDWCNB-94
 ```bash
 mkdir -p ~/.config/systemd/user/
 cp -a dist/blinkyoureyes $HOME/install/bin/
+sed -e "s%{{EXEFILE}}%$HOME/install/bin/blinkyoureyes%" blinkyoureyes.service.in > blinkyoureyes.service
 cp -a blinkyoureyes.service ~/.config/systemd/user/
 cp -a xsession.target ~/.config/systemd/user/
 cat .xsessionrc >> ~/.xsessionrc
