@@ -3,7 +3,7 @@ import sys
 import os
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QSettings
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction, QColorDialog, QWidgetAction, QDialog, QDialogButtonBox, QVBoxLayout, QHBoxLayout, QSlider
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QAction, QColorDialog, QWidgetAction, QDialog, QDialogButtonBox, QVBoxLayout, QHBoxLayout, QSlider, QCheckBox
 from PyQt5.QtGui import QPainter, QPixmap, QIcon, QColor
 
 from pyqt_colorpicker_widget.PyQt5.colorpicker import ColorPicker
@@ -36,7 +36,7 @@ def retrieve_asset(name, dir='assets'):
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
     def __init__(self, availablegeom, timer_count_ref, name = '', parent = None, widget = None,
-                 pencolor = QtCore.Qt.green, penwidth = 6):
+                 pencolor = QtCore.Qt.green, penwidth = 6, bdrawcross = False):
         super(BlinkYourEyesWidget, self).__init__()
         # Avoid this window appearing from alt-tab window selection
         # see the followings:
@@ -59,6 +59,7 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.clearpaint = False
         self.pencolor = pencolor
         self.penwidth = penwidth
+        self.bdrawcross = bdrawcross
 
         self.show()
 
@@ -116,6 +117,10 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
     def set_penwidth(self, width):
         self.penwidth = width
 
+    def set_drawcross(self, bdrawcross: bool):
+        self.bdrawcross = bdrawcross
+
+
     def paintEvent(self, e):
         if self.clearpaint:
             return
@@ -134,19 +139,32 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         #    rect = QtCore.QRect(0, 0, geom.width(), geom.height())
         rect = QtCore.QRect(0, 0, geom.width(), geom.height())
         painter.drawRect(rect)
-        print(self.name, self.frameGeometry(), self.geometry(), rect)
+        # print(self.name, self.frameGeometry(), self.geometry(), rect)
+
+
+        if self.bdrawcross:
+            pen.setWidth(max(int(self.penwidth/4), 1))
+            pen.setColor(self.pencolor)
+            painter.setPen(pen)
+            halfcrosssize = max(int(geom.height() / 80), 1)
+            painter.drawLine(QtCore.QPoint(int(geom.width()/2) - halfcrosssize, int(geom.height()/2)),
+                             QtCore.QPoint(int(geom.width()/2) + halfcrosssize, int(geom.height()/2)))
+            painter.drawLine(QtCore.QPoint(int(geom.width()/2), int(geom.height()/2) - halfcrosssize),
+                             QtCore.QPoint(int(geom.width()/2), int(geom.height()/2) + halfcrosssize))
         painter.end()
 
 def load_settings():
     settings = QSettings('blinkyoureyes', 'configs')
     pencolor = settings.value('pencolor', defaultValue=QColor(QtCore.Qt.green), type=QColor)
     penwidth = settings.value('penwidth', defaultValue=6, type=int)
-    return dict(pencolor=pencolor, penwidth=penwidth)
+    drawcross = settings.value('drawcross', defaultValue=False, type=bool)
+    return dict(pencolor=pencolor, penwidth=penwidth, drawcross=drawcross)
 
-def save_settings(color, width):
+def save_settings(color, width, drawcross):
     settings = QSettings('blinkyoureyes', 'configs')
     settings.setValue('pencolor', color)
     settings.setValue('penwidth', width)
+    settings.setValue('drawcross', drawcross)
     del settings
 
 class SettingsDialog(QDialog):
@@ -180,10 +198,17 @@ class SettingsDialog(QDialog):
         self.slider.setSliderPosition(current_settings['penwidth'])
         self.widthlabel = QLabel(str(current_settings['penwidth']))
         self.slider.valueChanged.connect(lambda value: self.widthlabel.setText(str(value)))
+
+        self.checkbox_drawcross = QCheckBox("draw center crosses?")
+        self.checkbox_drawcross.setChecked(current_settings['drawcross'])
+
         for k, w in widgets.items():
             self.slider.valueChanged.connect(w.set_penwidth)
             self.colorpicker.colorChanged.connect(lambda:
                                                   w.set_pencolor(QColor.fromRgb(*map(int, self.colorpicker.getRGB()))))
+            self.checkbox_drawcross.stateChanged.connect(lambda:
+                                                         w.set_drawcross(self.checkbox_drawcross.isChecked()))
+
         hlayout.addWidget(self.slider)
         hlayout.addWidget(self.widthlabel)
 
@@ -192,12 +217,14 @@ class SettingsDialog(QDialog):
         self.layout.addWidget(QLabel("Select Color"))
         self.layout.addWidget(self.colorpicker)
         self.layout.addWidget(self.buttonBox)
+        self.layout.addWidget(self.checkbox_drawcross)
         self.setLayout(self.layout)
 
     def save(self,):
         color = QColor.fromRgb(*map(int, self.colorpicker.getRGB()))
         width = self.slider.value()
-        save_settings(color, width)
+        drawcross = self.checkbox_drawcross.isChecked()
+        save_settings(color, width, drawcross)
         self.close()
 
     def cancel(self,):
