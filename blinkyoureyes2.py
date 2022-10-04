@@ -44,8 +44,6 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         # https://doc.qt.io/qt-5/qt.html#WindowType-enum
         # self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint|QtCore.Qt.FramelessWindowHint|QtCore.Qt.Tool)
 
-        # self.setStyleSheet('QMainWindow{background-color: darkgray;border: 5px solid black;}')
-        # self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus)
         self.setGeometry(availablegeom)
@@ -53,23 +51,15 @@ class BlinkYourEyesWidget(QtWidgets.QWidget):
         self.name = name
         # print(availablegeom)
         # self.setGeometry(QtCore.QRect(0, 0, 1920, 1080))
-        # self.showFullScreen()
         self.setAttribute(Qt.WA_NoSystemBackground, True)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
-        # self.setWindowOpacity(1.0)
-        # self.setStyleSheet("QWidget{background: #000000}")
-        # self.setStyleSheet("background: transparent;")
 
-        #self.setFocusPolicy(QtCore.Qt.NoFocus)
-        #self.setStyleSheet("background-color:transparent;")
         self.timer_count = timer_count_ref
         self.clearpaint = False
         self.pencolor = pencolor
         self.penwidth = penwidth
-        # self.pencolor = QtCore.Qt.darkGreen
 
-        # self.show()
         self.show()
 
         if platform.system() == 'Linux':
@@ -272,9 +262,7 @@ def main():
     tray.setVisible(True)
     # Creating the options
     menu = QMenu()
-    # settingsaction = QWidgetAction(None)
     settingsaction = QAction('Settings')
-    # settingslabel = QLabel('Settings')
     settingsaction.triggered.connect(lambda s: open_settings_dialog(s, widgets))
     menu.addAction(settingsaction)
     quit = QAction("Quit")
