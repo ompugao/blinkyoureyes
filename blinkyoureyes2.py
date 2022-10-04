@@ -264,7 +264,8 @@ def main():
                                 weakref.proxy(timer_count),
                                 'ex%s'%dw.screen(i).screen().serialNumber(),
                                 pencolor=configs['pencolor'],
-                                penwidth=configs['penwidth'])
+                                penwidth=configs['penwidth'],
+                                bdrawcross=configs['drawcross'])
         timer.timeout.connect(w.timer_callback)
         widgets[dw.screen(i).screen()] = w
 
