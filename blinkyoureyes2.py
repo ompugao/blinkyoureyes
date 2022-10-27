@@ -33,6 +33,10 @@ def retrieve_asset(name, dir='assets'):
         assets_path = os.path.join(base_path, dir)
     return os.path.join(assets_path, name)
 
+def _convert_blink_speed(v):
+    # TODO do not linearly interpolate
+    return int(600 - (v - 1) * 300.0 / 9)
+
 class BlinkYourEyesWidget(QtWidgets.QWidget):
 
     def __init__(self, availablegeom, timer_count_ref, name = '', parent = None, widget = None,
@@ -157,18 +161,20 @@ def load_settings():
     settings = QSettings('blinkyoureyes', 'configs')
     pencolor = settings.value('pencolor', defaultValue=QColor(QtCore.Qt.green), type=QColor)
     penwidth = settings.value('penwidth', defaultValue=6, type=int)
+    blinkspeed = settings.value('blinkspeed', defaultValue=1, type=int)
     drawcross = settings.value('drawcross', defaultValue=False, type=bool)
-    return dict(pencolor=pencolor, penwidth=penwidth, drawcross=drawcross)
+    return dict(pencolor=pencolor, penwidth=penwidth, blinkspeed=blinkspeed, drawcross=drawcross)
 
-def save_settings(color, width, drawcross):
+def save_settings(color, width, blinkspeed, drawcross):
     settings = QSettings('blinkyoureyes', 'configs')
     settings.setValue('pencolor', color)
     settings.setValue('penwidth', width)
+    settings.setValue('blinkspeed', blinkspeed)
     settings.setValue('drawcross', drawcross)
     del settings
 
 class SettingsDialog(QDialog):
-    def __init__(self, widgets):
+    def __init__(self, widgets, timer):
         super().__init__()
 
         self.setWindowTitle("BlinkYourEyes Settings")
@@ -182,8 +188,6 @@ class SettingsDialog(QDialog):
         self.layout = QVBoxLayout()
 
         current_settings = load_settings()
-
-        hlayout = QHBoxLayout()
 
         self.colorpicker = ColorPicker(self, rgb=(
             current_settings['pencolor'].red(),
@@ -199,6 +203,19 @@ class SettingsDialog(QDialog):
         self.widthlabel = QLabel(str(current_settings['penwidth']))
         self.slider.valueChanged.connect(lambda value: self.widthlabel.setText(str(value)))
 
+        self.blinkslider = QSlider(QtCore.Qt.Horizontal)
+        self.blinkslider.setTickInterval(1)
+        self.blinkslider.setMinimum(1)
+        self.blinkslider.setMaximum(10)
+        self.blinkslider.setSingleStep(1)
+        self.blinkslider.setSliderPosition(current_settings['blinkspeed'])
+        self.blinkspeedlabel = QLabel(str(current_settings['blinkspeed']))
+        def _cb(value):
+            self.blinkspeedlabel.setText(str(value))
+            timer.setInterval(_convert_blink_speed(value))
+        self.blinkslider.valueChanged.connect(_cb)
+        self.blinkslider.valueChanged.connect(_cb)
+
         self.checkbox_drawcross = QCheckBox("draw center crosses?")
         self.checkbox_drawcross.setChecked(current_settings['drawcross'])
 
@@ -209,29 +226,37 @@ class SettingsDialog(QDialog):
             self.checkbox_drawcross.stateChanged.connect(lambda:
                                                          w.set_drawcross(self.checkbox_drawcross.isChecked()))
 
+        hlayout = QHBoxLayout()
         hlayout.addWidget(self.slider)
         hlayout.addWidget(self.widthlabel)
+
+        hlayout2 = QHBoxLayout()
+        hlayout2.addWidget(self.blinkslider)
+        hlayout2.addWidget(self.blinkspeedlabel)
 
         self.layout.addWidget(QLabel("Select Width"))
         self.layout.addLayout(hlayout)
         self.layout.addWidget(QLabel("Select Color"))
         self.layout.addWidget(self.colorpicker)
-        self.layout.addWidget(self.buttonBox)
+        self.layout.addWidget(QLabel("Select Blinking Speed"))
+        self.layout.addLayout(hlayout2)
         self.layout.addWidget(self.checkbox_drawcross)
+        self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
     def save(self,):
         color = QColor.fromRgb(*map(int, self.colorpicker.getRGB()))
         width = self.slider.value()
+        blinkspeed = self.blinkslider.value()
         drawcross = self.checkbox_drawcross.isChecked()
-        save_settings(color, width, drawcross)
+        save_settings(color, width, blinkspeed, drawcross)
         self.close()
 
     def cancel(self,):
         self.close()
 
-def open_settings_dialog(s, widgets):
-    dlg = SettingsDialog(widgets)
+def open_settings_dialog(s, widgets, timer):
+    dlg = SettingsDialog(widgets, timer)
     dlg.exec_()
 
 def main():
@@ -254,9 +279,7 @@ def main():
             self.count = (self.count + 1)%10  # 1 seconds
 
     timer_count = TimerCount()
-    timer.setInterval(300)  # [milliseconds]
-    # def _update_count():
-        # timer_count = (timer_count + 1)%30 #1 seconds
+    timer.setInterval(_convert_blink_speed(configs['blinkspeed']))  # [milliseconds]
     timer.timeout.connect(timer_count._update)
 
     for i in range(dw.screenCount()):
@@ -291,7 +314,7 @@ def main():
     # Creating the options
     menu = QMenu()
     settingsaction = QAction('Settings')
-    settingsaction.triggered.connect(lambda s: open_settings_dialog(s, widgets))
+    settingsaction.triggered.connect(lambda s: open_settings_dialog(s, widgets, weakref.proxy(timer)))
     menu.addAction(settingsaction)
     quit = QAction("Quit")
     quit.triggered.connect(app.quit)
