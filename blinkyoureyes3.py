@@ -185,7 +185,7 @@ class SettingsDialog(QDialog):
 
         self.setWindowTitle("BlinkYourEyes Settings")
 
-        QBtn = QDialogButtonBox.Save  | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Save  | QDialogButtonBox.StandardButton.Cancel
 
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.save)
@@ -200,7 +200,7 @@ class SettingsDialog(QDialog):
             current_settings['pencolor'].green(),
             current_settings['pencolor'].blue()))
 
-        self.slider = QSlider(QtCore.Qt.Horizontal)
+        self.slider = QSlider(QtCore.Qt.Orientation.Horizontal)
         self.slider.setTickInterval(1)
         self.slider.setMinimum(1)
         self.slider.setMaximum(64)
@@ -209,7 +209,7 @@ class SettingsDialog(QDialog):
         self.widthlabel = QLabel(str(current_settings['penwidth']))
         self.slider.valueChanged.connect(lambda value: self.widthlabel.setText(str(value)))
 
-        self.blinkslider = QSlider(QtCore.Qt.Horizontal)
+        self.blinkslider = QSlider(QtCore.Qt.Orientation.Horizontal)
         self.blinkslider.setTickInterval(1)
         self.blinkslider.setMinimum(1)
         self.blinkslider.setMaximum(10)
