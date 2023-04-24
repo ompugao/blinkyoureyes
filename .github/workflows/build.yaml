@@ -39,19 +39,19 @@ jobs:
           - os: macos-latest
             TARGET: macos
             CMD_BUILD: >
-              pyinstaller -F -w --add-data assets:assets --onefile -n blinkyoureyes blinkyoureyes2.py &&
+              pyinstaller -F -w --add-data assets:assets --onefile -n blinkyoureyes blinkyoureyes3.py &&
               cd dist/ &&
               zip -r9 blinkyoureyes blinkyoureyes.app/
             OUT_FILE_NAME: blinkyoureyes.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
-            CMD_BUILD: pyinstaller --add-data "assets;assets" -n blinkyoureyes blinkyoureyes2.py --onefile --noconsole
+            CMD_BUILD: pyinstaller --add-data "assets;assets" -n blinkyoureyes blinkyoureyes3.py --onefile --noconsole
             OUT_FILE_NAME: blinkyoureyes.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
           - os: ubuntu-20.04
             TARGET: ubuntu-20.04
-            CMD_BUILD: pyinstaller --add-data assets:assets -n blinkyoureyes --onefile blinkyoureyes2.py
+            CMD_BUILD: pyinstaller --add-data assets:assets -n blinkyoureyes --onefile blinkyoureyes3.py
             OUT_FILE_NAME: blinkyoureyes
             ASSET_MIME: application/x-elf
     runs-on: ${{ matrix.os }}
@@ -67,7 +67,7 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
-        pip install pyinstaller pyqt5 ewmh
+        pip install pyinstaller pyqt6 ewmh
     - name: Build with pyinstaller for ${{matrix.TARGET}}
       run: ${{matrix.CMD_BUILD}}
     - name: Load Release URL File from release job
